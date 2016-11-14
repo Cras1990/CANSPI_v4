@@ -9,12 +9,18 @@
 #include "PtCan_ErrHandling.h"
 #include "ff.h"
 #include "Std_Types.h"
+#include "PtCan_Cfg.h"
 
 #define NUM_STRINGS_DATA 4
-#define TORQUE_1_MASK                   0x01
-#define TORQUE_3_MASK                   0x02
-#define GESCHWINDIGKEIT_RAD_MASK        0x04
-#define STAT_KOMBI_MASK                 0x08
+//#define TORQUE_1_MASK                   0x01
+//#define TORQUE_3_MASK                   0x02
+//#define GESCHWINDIGKEIT_RAD_MASK        0x04
+//#define STAT_KOMBI_MASK                 0x08
+
+typedef struct
+{
+  volatile uint8_t savingMasks;
+} FileDescriptorType;
 
 static FIL fil_gesch_wheel;
 static FIL fil_torque1;
@@ -51,6 +57,9 @@ static volatile uint8_t signal_arrvoll_vAuto = 0;
 static volatile uint8_t signal_arrvoll_v_lwheel = 0;
 static volatile uint8_t signal_arrvoll_torque1 = 0;
 static volatile uint8_t signal_arrvoll_torque3 = 0;
+
+FileDescriptorType FileDescriptorMap[4];
+
 
 /* Local Function Declarations */
 static StatusType PtCan_SdStorage_openSd(uint8_t dataIndex);
@@ -105,41 +114,41 @@ static void PtCan_SdStorage_sendData(uint8_t dataIndex, volatile uint8_t *co_arr
 
 void PtCan_SdStorage_storeSD() { // von hier aus werden die Daten an die SD gesendet, von der isr werden die Daten in die Puffer gespeichert
 
-	if (save_files & TORQUE_1_MASK) {
+	if (save_files & FileDescriptorMap[0]) {
 
 		PtCan_SdStorage_sendData(0, &co_arr_full_TR1);
 		// data transfer finished
-		save_files = save_files & (~TORQUE_1_MASK); // setze entsprechendes bit von Gesch.rad bei save_files, damit man signal., dass der erster Buffer von Geschw. voll ist
+		save_files = save_files & (~FileDescriptorMap[0]); // setze entsprechendes bit von Gesch.rad bei save_files, damit man signal., dass der erster Buffer von Geschw. voll ist
 		signal_arrvoll_torque1 = 0;
 	}
 
-	if (save_files & TORQUE_3_MASK) {
+	if (save_files & FileDescriptorMap[1]) {
 
 		PtCan_SdStorage_sendData(1, &co_arr_full_TR3);
 
 // data transfer finished
-		save_files = save_files & (~TORQUE_3_MASK); // setze entsprechendes bit von Gesch.rad bei save_files, damit man signal., dass der erster Buffer von Geschw. voll ist
+		save_files = save_files & (~FileDescriptorMap[1]); // setze entsprechendes bit von Gesch.rad bei save_files, damit man signal., dass der erster Buffer von Geschw. voll ist
 		signal_arrvoll_torque3 = 0;
 
 	}
-	if (save_files & GESCHWINDIGKEIT_RAD_MASK) {
+	if (save_files & FileDescriptorMap[2]) {
 
 		PtCan_SdStorage_sendData(2, &co_arr_full_GR_L);
 // data transfer finished
-		save_files = save_files & (~GESCHWINDIGKEIT_RAD_MASK); // setze entsprechendes bit von Gesch.rad bei save_files, damit man signal., dass der erster Buffer von Geschw. voll ist
+		save_files = save_files & (~FileDescriptorMap[2]); // setze entsprechendes bit von Gesch.rad bei save_files, damit man signal., dass der erster Buffer von Geschw. voll ist
 		signal_arrvoll_v_lwheel = 0;
 
 	}
-	if (save_files & STAT_KOMBI_MASK) {
+	if (save_files & FileDescriptorMap[3]) {
 
 		PtCan_SdStorage_sendData(3, &co_arr_full_STKO);
 // data transfer finished
-		save_files = save_files & (~STAT_KOMBI_MASK); // ruecksetze entsprechendes bit von Gesch.rad bei save_files, damit man signal., dass der erster Buffer von Geschw. gesendet worden ist
+		save_files = save_files & (~FileDescriptorMap[3]); // ruecksetze entsprechendes bit von Gesch.rad bei save_files, damit man signal., dass der erster Buffer von Geschw. gesendet worden ist
 		signal_arrvoll_vAuto = 0; // Array gesendet
 	}
 }
 
-void PtCan_SdStorage_storeRAM(volatile uint8_t *co_arr_full, volatile uint16_t *co_arr_save, volatile uint8_t *signal_arrvoll, volatile uint32_t time, volatile uint16_t value)
+void PtCan_SdStorage_storeRAM(uint8_t dataIndex, volatile uint8_t *co_arr_full, volatile uint16_t *co_arr_save, volatile uint8_t *signal_arrvoll, volatile uint32_t time, volatile uint16_t value)
 {
 	uint8_t help_array = 0;
 	char buffer_tmp[50];
@@ -169,6 +178,14 @@ void PtCan_SdStorage_storeRAM(volatile uint8_t *co_arr_full, volatile uint16_t *
 		for (uint8_t i = 0; i < help_array; i++)
 			arr2SD[*co_arr_full][(*co_arr_save)++] = buffer_tmp[i];
 	}
+
+	if (*signal_arrvoll && ((save_files & FileDescriptorMap[dataIndex]) == 0)) { // Falls buffer voll und Datenspeicherung gerade nicht stattfindet...
+		save_files = save_files | FileDescriptorMap[dataIndex]; // setze entsprechendes bit von Gesch.rad bei save_files, damit man signal., dass der erster Buffer von Geschw. voll ist
+		if ((*co_arr_full) == 0) // nachdem am Anfang das 1. array gefuellt wurde
+			(*co_arr_full)++;
+		else
+			// nachdem das 2. array gefuellt wurde, wird das erste wieder gefuellt
+			(*co_arr_full)--;
 }
 
 void PtCan_initMemory() {
@@ -182,6 +199,18 @@ void PtCan_initMemory() {
 	file_data[2] = &fil_gesch_wheel;
 	file_data[3] = &fil_gesch_car;
 
+	FileDescriptorMap[0].savingMasks = 0x01;
+	FileDescriptorMap[1].savingMasks = 0x02;
+	FileDescriptorMap[2].savingMasks = 0x04;
+	FileDescriptorMap[3].savingMasks = 0x08;
+
+	messung = CAN2_EIN;
+
+}
+
+uint8_t PtCan_SdStorage_getsavefiles()
+{
+	return save_files;
 }
 
 

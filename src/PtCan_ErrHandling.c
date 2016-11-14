@@ -8,6 +8,7 @@
 #include "PtCan_ErrHandling.h"
 #include "PtCan_SdStorage.h"
 #include "led_button.h"
+#include "PtCan_Cfg.h"
 
 
 /**
