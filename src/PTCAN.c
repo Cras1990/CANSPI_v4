@@ -75,7 +75,7 @@ TM_FATFS_Size_t CardSize;
 // Timer
 static volatile unsigned int counter = 0;		// Zaehler fuer CAN Uebertragung
 
-static uint8_t program_start = 0;// Globale Variable zur Signalisierung, dass das ganze Programm ab der Messung gestartet ist
+static uint8_t program_start = 0;	// Globale Variable zur Signalisierung, dass das ganze Programm ab der Messung gestartet ist
 
 // Einstellungsvariablen fuer Peripherie-Controller
 static CanTxMsgTypeDef TxMessage;
@@ -344,12 +344,10 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* CanHandle) {
 					arr2SD[co_arr_full_TR1][co_arr_save_TR1++] = buffer[i];
 				} else {         // den Rest im naechsten Array
 					if (co_arr_full_TR1 == 0) { // Falls 1. array voll
-						arr2SD[co_arr_full_TR1 + 1][co_arr_save_TR1++] =
-								buffer[i]; // ich verwende diese Anweisung co_arr_full_TR1+1, da ich nicht immer wieder co_arr_full_TR1 erhoehen kann
+						arr2SD[co_arr_full_TR1 + 1][co_arr_save_TR1++] = buffer[i]; // ich verwende diese Anweisung co_arr_full_TR1+1, da ich nicht immer wieder co_arr_full_TR1 erhoehen kann
 					} else
 						// Falls 2. array voll
-						arr2SD[co_arr_full_TR1 - 1][co_arr_save_TR1++] =
-								buffer[i]; // ich verwende diese Anweisung co_arr_full_TR1+1, da ich nicht immer wieder co_arr_full_TR1 erhoehen kann
+						arr2SD[co_arr_full_TR1 - 1][co_arr_save_TR1++] = buffer[i]; // ich verwende diese Anweisung co_arr_full_TR1+1, da ich nicht immer wieder co_arr_full_TR1 erhoehen kann
 				}
 				if (co_arr_save_TR1 == 512) // Ist beliebiger Array voll
 					co_arr_save_TR1 = 0;    //initialisiere erneut Arrayfuellung
@@ -390,12 +388,10 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* CanHandle) {
 					arr2SD[co_arr_full_TR3][co_arr_save_TR3++] = buffer[i];
 				} else {         // den Rest im naechsten Array
 					if (co_arr_full_TR3 == 2) { // Falls 1. array voll
-						arr2SD[co_arr_full_TR3 + 1][co_arr_save_TR3++] =
-								buffer[i]; // ich verwende diese Anweisung co_arr_full_TR3+1, da ich nicht immer wieder co_arr_full_TR3 erhoehen kann
+						arr2SD[co_arr_full_TR3 + 1][co_arr_save_TR3++] = buffer[i]; // ich verwende diese Anweisung co_arr_full_TR3+1, da ich nicht immer wieder co_arr_full_TR3 erhoehen kann
 					} else
 						// Falls 2. array voll
-						arr2SD[co_arr_full_TR3 - 1][co_arr_save_TR3++] =
-								buffer[i]; // ich verwende diese Anweisung co_arr_full_TR3+1, da ich nicht immer wieder co_arr_full_TR3 erhoehen kann
+						arr2SD[co_arr_full_TR3 - 1][co_arr_save_TR3++] = buffer[i]; // ich verwende diese Anweisung co_arr_full_TR3+1, da ich nicht immer wieder co_arr_full_TR3 erhoehen kann
 				}
 				if (co_arr_save_TR3 == 512) // Ist beliebiger Array voll
 					co_arr_save_TR3 = 0;    //initialisiere erneut Arrayfuellung
@@ -437,12 +433,10 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* CanHandle) {
 					arr2SD[co_arr_full_GR_L][co_arr_save_GR_L++] = buffer[i];
 				} else {         // den Rest im naechsten Array
 					if (co_arr_full_GR_L == 4) { // Falls 1. array voll
-						arr2SD[co_arr_full_GR_L + 1][co_arr_save_GR_L++] =
-								buffer[i]; // ich verwende diese Anweisung co_arr_full_TR3+1, da ich nicht immer wieder co_arr_full_TR3 erhoehen kann
+						arr2SD[co_arr_full_GR_L + 1][co_arr_save_GR_L++] = buffer[i]; // ich verwende diese Anweisung co_arr_full_TR3+1, da ich nicht immer wieder co_arr_full_TR3 erhoehen kann
 					} else
 						// Falls 2. array voll
-						arr2SD[co_arr_full_GR_L - 1][co_arr_save_GR_L++] =
-								buffer[i]; // ich verwende diese Anweisung co_arr_full_TR3+1, da ich nicht immer wieder co_arr_full_TR3 erhoehen kann
+						arr2SD[co_arr_full_GR_L - 1][co_arr_save_GR_L++] = buffer[i]; // ich verwende diese Anweisung co_arr_full_TR3+1, da ich nicht immer wieder co_arr_full_TR3 erhoehen kann
 				}
 				if (co_arr_save_GR_L == 512) // Ist beliebiger Array voll
 					co_arr_save_GR_L = 0;   //initialisiere erneut Arrayfuellung
@@ -486,12 +480,10 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* CanHandle) {
 					arr2SD[co_arr_full_STKO][co_arr_save_STKO++] = buffer[i];
 				else {         // den Rest im naechsten Array
 					if (co_arr_full_STKO == 6) { // Falls 1. array voll
-						arr2SD[co_arr_full_STKO + 1][co_arr_save_STKO++] =
-								buffer[i]; // ich verwende diese Anweisung co_arr_full_STKO+1, da ich nicht immer wieder co_arr_full_STKO erhoehen kann
+						arr2SD[co_arr_full_STKO + 1][co_arr_save_STKO++] = buffer[i]; // ich verwende diese Anweisung co_arr_full_STKO+1, da ich nicht immer wieder co_arr_full_STKO erhoehen kann
 					} else
 						// Falls 2. array voll
-						arr2SD[co_arr_full_STKO - 1][co_arr_save_STKO++] =
-								buffer[i]; // ich verwende diese Anweisung co_arr_full_STKO+1, da ich nicht immer wieder co_arr_full_STKO erhoehen kann
+						arr2SD[co_arr_full_STKO - 1][co_arr_save_STKO++] = buffer[i]; // ich verwende diese Anweisung co_arr_full_STKO+1, da ich nicht immer wieder co_arr_full_STKO erhoehen kann
 				}
 				if (co_arr_save_STKO == 512) // Ist beliebiger Array voll
 					co_arr_save_STKO = 0;   //initialisiere erneut Arrayfuellung
@@ -541,7 +533,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 		if (get_button_state() == 0) { // Wurde Knopf zur Datenspeicherung gedrueckt?
 			set_button_state();	// Dann setze ensprechendes Signalisierungsbit
 		} else {
-			reset_button_state();// Sonst, signalisiere, dass Knopf erneut gedrueckt wurde, um Messung zu stoppen
+			reset_button_state();	// Sonst, signalisiere, dass Knopf erneut gedrueckt wurde, um Messung zu stoppen
 
 		}
 
