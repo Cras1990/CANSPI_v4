@@ -9,10 +9,28 @@
 #include "PtCan_SdStorage.h"
 #include "stm32f4xx_hal.h"
 #include "PtCan_Cfg.h"
+#include "led_button.h"
+#include "PtCan_Tim.h"
+#include "PtCan_ErrHandling.h"
 
 // Einstellungsvariablen fuer Peripherie-Controller
 static CanTxMsgTypeDef TxMessage;
 static CanRxMsgTypeDef RxMessage;
+
+//braucht man nicht
+static volatile uint16_t vehicle_speed; // velocity of the car. It can be negative
+static volatile int16_t trq_eng_in1; //      torque actual value can be negative
+static volatile uint16_t trq_eng_in3;  			//      rpm_engine
+static volatile int16_t left_wheel_speed; // velocity of left wheel can be negative
+
+CAN_HandleTypeDef hcan1;
+CAN_HandleTypeDef hcan2;
+
+//// Timer
+extern volatile uint32_t counter;		// Zaehler fuer CAN Uebertragung
+extern volatile uint8_t messung;
+//uint8_t program_start = 0;	// Globale Variable zur Signalisierung, dass das ganze Programm ab der Messung gestartet ist
+extern uint8_t can_deinit;
 
 /* CAN1 init function
  * @brief  Funktion, zur Einstellung der CAN-Schnittstelle zum Empfangen von CAN-Signalen.
@@ -140,8 +158,7 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* CanHandle) {
 				+ ((CanHandle->pRxMsg->Data[1]) >> 4);
 		trq_eng_in1 = trq_eng_in1 >> 1;
 
-		PtCan_SdStorage_storeRAM(0, &co_arr_full_TR1, &co_arr_save_TR1,
-				&signal_arrvoll_torque1, counter, trq_eng_in1);
+		PtCan_SdStorage_storeRAM(0, counter, trq_eng_in1);
 
 		if (messung == CAN2_EIN)
 			hcan2.pTxMsg->StdId = TORQUE_3;
@@ -152,8 +169,7 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* CanHandle) {
 		trq_eng_in3 = (((CanHandle->pRxMsg->Data[5]) << 8)
 				| CanHandle->pRxMsg->Data[4]) >> 2;
 
-		PtCan_SdStorage_storeRAM(1, &co_arr_full_TR3, &co_arr_save_TR3,
-				&signal_arrvoll_torque3, counter, trq_eng_in3);
+		PtCan_SdStorage_storeRAM(1, counter, trq_eng_in3);
 
 		if (messung == CAN2_EIN)
 			hcan2.pTxMsg->StdId = GESCHWINDIGKEIT_RAD;
@@ -165,8 +181,7 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* CanHandle) {
 		left_wheel_speed = (((CanHandle->pRxMsg->Data[5]) << 8)
 				| CanHandle->pRxMsg->Data[4]) >> 4;
 
-		PtCan_SdStorage_storeRAM(2, &co_arr_full_GR_L, &co_arr_save_GR_L,
-				&signal_arrvoll_v_lwheel, counter, left_wheel_speed);
+		PtCan_SdStorage_storeRAM(2, counter, left_wheel_speed);
 
 		if (messung == CAN2_EIN)
 			hcan2.pTxMsg->StdId = STAT_KOMBI;
@@ -180,8 +195,7 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* CanHandle) {
 				| CanHandle->pRxMsg->Data[0];
 		vehicle_speed /= 10;
 
-		PtCan_SdStorage_storeRAM(3, &co_arr_full_STKO, &co_arr_save_STKO,
-				&signal_arrvoll_vAuto, counter, vehicle_speed);
+		PtCan_SdStorage_storeRAM(3, counter, vehicle_speed);
 
 		if (messung == CAN2_EIN)
 			hcan2.pTxMsg->StdId = TORQUE_1;
@@ -198,4 +212,44 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* CanHandle) {
 		Error_Handler_CANR();
 	}
 
+}
+
+void PtCan_Can1ActivReceiveIT()
+{
+	if (HAL_CAN_Receive_IT(&hcan1, CAN_FIFO0) != HAL_OK) { // Wurde zum ersten Mal das STM-Board angemacht, dann initialisiere CAN-Empfangsuebertragung
+		/* Reception Error */
+		Error_Handler_CANR();
+	}
+}
+
+void PtCan_Can1Sleep()
+{
+	if (HAL_CAN_Sleep(&hcan1) != HAL_OK) {
+		/* Reception Error */
+		Error_Handler_CANR();
+	}
+}
+
+void PtCan_Can1WU()
+{
+	if (HAL_CAN_WakeUp(&hcan1) != HAL_OK) {
+		/* Reception Error */
+		Error_Handler_CANR();
+	}
+}
+
+void PtCan_Can2_Transmit() {
+	if (messung == CAN2_EIN) {	// Nur CAN2 Einschalten, wenn gewuenscht!
+		if (HAL_CAN_Transmit(&hcan2, 10) != HAL_OK) {
+			/* Transmition Error */
+			Error_Handler_CANT();
+		}
+
+	} else {
+		if (can_deinit == 0) {   // wurde CAN2 deinitialisiert?
+			HAL_CAN_MspDeInit(&hcan2);			// CAN Controller-Sender
+			can_deinit = 1;
+		}
+		BSP_LED_Off(LED4);// Diese LED wird ausgemacht, um anzugeben, dass CAN2 nicht dabei ist
+	}
 }

@@ -10,11 +10,24 @@
 
 #ifndef STATUSTYPEDEFINED
 #define STATUSTYPEDEFINED
-#define E_OK      0u
 typedef unsigned char StatusType; /* OSEK compliance */
 #endif
 
-#define E_NOT_OK  1u
+
+#ifndef STD_ON
+  #define STD_ON 1u
+#endif
+#ifndef STD_OFF
+  #define STD_OFF 0u
+#endif
+
+#ifndef E_OK
+  #define E_OK 0
+#endif
+
+#ifndef E_NOT_OK
+  #define E_NOT_OK 1
+#endif
 
 
 

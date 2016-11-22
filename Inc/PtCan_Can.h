@@ -10,7 +10,10 @@
 
 void MX_CAN1_Init(void);
 void MX_CAN2_Init(void);
-
+void PtCan_Can2_Transmit(void);
+void PtCan_Can1ActivReceiveIT(void);
+void PtCan_Can1Sleep(void);
+void PtCan_Can1WU(void);
 
 
 #endif /* PTCAN_CAN_H_ */

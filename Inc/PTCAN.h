@@ -18,8 +18,6 @@ void start_storage(void);
 
 void stop_storage(void);
 
-void can_transmit(void);
-
 uint8_t get_storage_state(void);
 
 

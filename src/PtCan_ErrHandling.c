@@ -9,7 +9,9 @@
 #include "PtCan_SdStorage.h"
 #include "led_button.h"
 #include "PtCan_Cfg.h"
+#include "tm_stm32_fatfs.h"
 
+extern volatile uint8_t messung;
 
 /**
  * @brief  This function is executed in case of error occurrence.

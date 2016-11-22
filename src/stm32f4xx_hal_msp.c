@@ -58,6 +58,7 @@ void HAL_MspInit(void) {
 }
 
 static int CAN1_CLK_ENABLED = 0;
+static int CAN2_CLK_ENABLED = 0;
 
 void HAL_CAN_MspInit(CAN_HandleTypeDef* hcan) {
 
@@ -100,9 +101,9 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef* hcan) {
 		/* Peripheral clock enable */
 		__CAN2_CLK_ENABLE()
 		;
-		CAN1_CLK_ENABLED++;
-		if (CAN1_CLK_ENABLED == 1) {
-			__CAN1_CLK_ENABLE()
+		CAN2_CLK_ENABLED++;
+		if (CAN2_CLK_ENABLED == 1) {
+			__CAN2_CLK_ENABLE()
 			;
 		}
 
@@ -161,9 +162,9 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* hcan) {
 		/* USER CODE END CAN2_MspDeInit 0 */
 		/* Peripheral clock disable */
 		__CAN2_CLK_DISABLE();
-		CAN1_CLK_ENABLED--;
-		if (CAN1_CLK_ENABLED == 0) {
-			__CAN1_CLK_DISABLE();
+		CAN2_CLK_ENABLED--;
+		if (CAN2_CLK_ENABLED == 0) {
+			__CAN2_CLK_DISABLE();
 		}
 
 		/**CAN2 GPIO Configuration

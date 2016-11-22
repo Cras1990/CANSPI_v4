@@ -97,5 +97,7 @@ void BSP_LED_On(Led_TypeDef Led);
 void BSP_LED_Off(Led_TypeDef Led);
 void BSP_PB_Init(Button_TypeDef Button, ButtonMode_TypeDef Mode);
 uint8_t get_button_state(void);
+void set_button_state(void);
+void reset_button_state(void);
 
 #endif /* LED_BUTTON_H_ */

@@ -34,6 +34,7 @@
 #include "defines.h"
 #include "tm_stm32_fatfs.h"
 #include "PTCAN.h"
+#include "PtCan_Can.h"
 #include "led_button.h"
 
 int main(void) {
@@ -49,7 +50,7 @@ int main(void) {
 				start_storage();
 			}
 
-			can_transmit();
+			PtCan_Can2_Transmit();
 			store_incomming_data();
 		}
 
