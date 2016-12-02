@@ -8,10 +8,8 @@
 #include "PtCan_ErrHandling.h"
 #include "PtCan_SdStorage.h"
 #include "led_button.h"
-#include "PtCan_Cfg.h"
 #include "tm_stm32_fatfs.h"
 
-extern volatile uint8_t messung;
 
 /**
  * @brief  This function is executed in case of error occurrence.
@@ -19,13 +17,12 @@ extern volatile uint8_t messung;
  * @retval None
  */
 void Error_Handler_CANT(void) {
-//	f_mount(NULL, "SD:", 1);
-//
-//	while (1) {
-//		BSP_LED_Toggle(LED6);
-//		HAL_Delay(1000);
-//	}
-	messung = CAN2_AUS;
+	f_mount(NULL, "SD:", 1);
+
+	while (1) {
+		BSP_LED_Toggle(LED6);
+		HAL_Delay(1000);
+	}
 }
 
 /**

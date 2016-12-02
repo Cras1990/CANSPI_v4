@@ -6,26 +6,20 @@
  */
 #include "PtCan_Tim.h"
 #include "PtCan_Cfg.h"
-#include "PtCan_SdStorage.h"
 #include "stm32f4xx_hal.h"
 #include "led_button.h"
-#include "PtCan_Can.h"
-#include "PTCAN.h"
 #include "PtCan_ErrHandling.h"
+#include "Std_Types.h"
 
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 
 // Timer
-volatile uint32_t counter = 0;		// Zaehler fuer CAN Uebertragung
-extern volatile uint8_t program_start;
+static volatile uint32_t counter = 0;		// Zaehler fuer CAN Uebertragung
 
 /** TIM2 init function
  **/
 void MX_TIM2_Init(void) {
-
-	TIM_ClockConfigTypeDef sClockSourceConfig;
-	TIM_MasterConfigTypeDef sMasterConfig;
 
 	htim2.Instance = TIM2;
 	htim2.Init.Prescaler = 0;
@@ -34,20 +28,10 @@ void MX_TIM2_Init(void) {
 	htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	HAL_TIM_Base_Init(&htim2);
 
-	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-	HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig);
-
-	sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
-	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-	HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig);
-
 }
 
 /* TIM2 init function */
 void MX_TIM3_Init(void) {
-
-	TIM_ClockConfigTypeDef sClockSourceConfig;
-	TIM_MasterConfigTypeDef sMasterConfig;
 
 	htim3.Instance = TIM3;
 	htim3.Init.Prescaler = 16800;
@@ -55,13 +39,6 @@ void MX_TIM3_Init(void) {
 	htim3.Init.Period = 10000;                    // Timer eingestellt bei 2s
 	htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	HAL_TIM_Base_Init(&htim3);
-
-	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-	HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig);
-
-	sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
-	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-	HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig);
 
 }
 
@@ -74,7 +51,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		} else
 			counter = 0;
 
-	} else if (htim->Instance == TIM3 && program_start == 1) {
+//	} else if (htim->Instance == TIM3 && program_start == 1) {
+	} else if (htim->Instance == TIM3) {
 
 		__HAL_GPIO_EXTI_CLEAR_IT(KEY_BUTTON_PIN);
 		HAL_NVIC_EnableIRQ(KEY_BUTTON_EXTI_IRQn);
@@ -113,4 +91,14 @@ void PtCan_Tim_SetState(uint8_t instance_timer, uint8_t on_off) {
 					}
 		}
 	}
+}
+
+uint16_t PtCan_Tim_GetCounter()
+{
+	return counter;
+}
+
+void PtCan_Tim_SetCounter(uint16_t value)
+{
+	counter = value;
 }

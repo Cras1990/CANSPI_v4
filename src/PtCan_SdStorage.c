@@ -7,9 +7,7 @@
 
 #include "PtCan_SdStorage.h"
 #include "PtCan_ErrHandling.h"
-//#include "ff.h"
 #include "tm_stm32_fatfs.h"
-#include "Std_Types.h"
 #include "PtCan_Cfg.h"
 
 typedef struct {
@@ -34,8 +32,6 @@ static volatile uint8_t save_files = 0; // Gibt an, wann ein Datenpaket an die S
 
 FileDescriptorType FileDescriptorMap[4];
 
-volatile uint8_t messung;
-uint8_t can_deinit = 0;
 
 /* Local Function Declarations */
 static StatusType PtCan_SdStorage_openFile(uint8_t dataIndex);
@@ -193,11 +189,9 @@ void PtCan_initMemory() {
 	FileDescriptorMap[3].file_data = &fil_gesch_car;
 	FileDescriptorMap[3].strs_data = "SD:geschwindigkeit_auto_zus.csv";
 
-	messung = CAN2_EIN;
-
 }
 
-StatusType PtCan_SdStorage_SetStateSD(uint8_t on_off) {
+StatusType PtCan_SdStorage_SDMount(uint8_t on_off) {
 	if (on_off == STD_ON) {
 		return f_mount(&FS, "SD:", 1);
 	} else {
@@ -206,13 +200,13 @@ StatusType PtCan_SdStorage_SetStateSD(uint8_t on_off) {
 	}
 }
 
-uint8_t get_storage_state() {
+uint8_t PtCan_SdStorage_getStorageState() {
 
 	return cantrans_sdstor_init;
 
 }
 
-void set_storage_state(uint8_t neu) {
+void PtCan_SdStorage_setStorageState(uint8_t neu) {
 
 	cantrans_sdstor_init = neu;
 
