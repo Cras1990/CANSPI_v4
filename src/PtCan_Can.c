@@ -2,8 +2,28 @@
  * PtCan_Can.c
  *
  *  Created on: 14.11.2016
- *      Author: revelo
- */
+ *      Author: SamirAlexis
+ *
+ *  -----------------------------------------------------------------------------------------------------------------
+ *  FILE DESCRIPTION
+ *  -----------------------------------------------------------------------------------------------------------------
+ *     \file  PtCan_Can.c
+ *        \brief  File to manage the data communication between the
+ *        				host processor and CAN-Bus
+ *
+ *      \details  Dependencies: PtCan_SdStorage.h
+ *      												PtCan_ErrHandling.h
+ *      												stm32f4xx_hal.h
+ *      												PtCan_Cfg.h
+ *      												led_button.h
+ *      												PtCan_Tim.h
+ *      												PtCan_Can.h
+ *
+ *********************************************************************************************************************/
+
+/**********************************************************************************************************************
+ *  INCLUDES
+ *********************************************************************************************************************/
 
 #include "PtCan_Can.h"
 #include "PtCan_SdStorage.h"
@@ -13,11 +33,16 @@
 #include "PtCan_Tim.h"
 #include "PtCan_ErrHandling.h"
 
+
+/**********************************************************************************************************************
+ *  LOCAL DATA PROTOTYPES
+ **********************************************************************************************************************/
+
 // Einstellungsvariablen fuer Peripherie-Controller
 static CanTxMsgTypeDef TxMessage;
 static CanRxMsgTypeDef RxMessage;
 
-//braucht man nicht
+// varibles to store the computed values of row data
 static volatile uint16_t vehicle_speed; // velocity of the car. It can be negative
 static volatile int16_t trq_eng_in1; //      torque actual value can be negative
 static volatile uint16_t trq_eng_in3;  			//      rpm_engine
@@ -25,6 +50,11 @@ static volatile int16_t left_wheel_speed; // velocity of left wheel can be negat
 
 CAN_HandleTypeDef hcan1;
 CAN_HandleTypeDef hcan2;
+
+
+/**********************************************************************************************************************
+ *  GLOBAL FUNCTION
+ *********************************************************************************************************************/
 
 /* CAN1 init function
  * @brief  Funktion, zur Einstellung der CAN-Schnittstelle zum Empfangen von CAN-Signalen.
@@ -133,7 +163,7 @@ void MX_CAN2_Init(void) {
 
 /**
  * @brief  Transmission complete callback in non blocking mode.
- * 		   In dieser Methode ist die Datenspeicherung in ein Buffer programmiert.
+ * 		   	 In dieser Methode ist das Speichern von Rohdaten auf dem RAM-Speicher.
  * @param  CanHandle: pointer to a CAN_HandleTypeDef structure that contains
  *         the configuration information for the specified CAN.
  * @retval None
@@ -209,14 +239,26 @@ void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* CanHandle) {
 
 }
 
+
+/**
+ * @brief  Initialize receive process of CAN-Messages
+ * @param  None
+ * @retval None
+ */
 void PtCan_Can1ActivReceiveIT()
 {
-	if (HAL_CAN_Receive_IT(&hcan1, CAN_FIFO0) != HAL_OK) { // Wurde zum ersten Mal das STM-Board angemacht, dann initialisiere CAN-Empfangsuebertragung
+	if (HAL_CAN_Receive_IT(&hcan1, CAN_FIFO0) != HAL_OK) {
 		/* Reception Error */
 		Error_Handler_CANR();
 	}
 }
 
+
+/**
+ * @brief  Sleep the CAN module.
+ * @param  None
+ * @retval None
+ */
 void PtCan_Can1Sleep()
 {
 	if (HAL_CAN_Sleep(&hcan1) != HAL_OK) {
@@ -225,6 +267,12 @@ void PtCan_Can1Sleep()
 	}
 }
 
+
+/**
+ * @brief  Wake up CAN module CAN1 Interface
+ * @param  None
+ * @retval None
+ */
 void PtCan_Can1WU()
 {
 	if (HAL_CAN_WakeUp(&hcan1) != HAL_OK) {
@@ -233,11 +281,14 @@ void PtCan_Can1WU()
 	}
 }
 
+/**
+ * @brief  Initialize transfer process of CAN-Messages CAN2 Interface
+ * @param  None
+ * @retval None
+ */
 void PtCan_Can2_Transmit() {
-#if defined (CAN2_EIN)
 	if (HAL_CAN_Transmit(&hcan2, 10) != HAL_OK) {
 		/* Transmition Error */
 		Error_Handler_CANT();
 	}
-#endif
 }

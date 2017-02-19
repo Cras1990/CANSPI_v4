@@ -28,6 +28,10 @@
 #ifndef TM_DEFINES_H
 #define TM_DEFINES_H
 
+/**********************************************************************************************************************
+ *  GLOBAL CONSTANT MACROS
+ *********************************************************************************************************************/
+
 /* Put your global defines for all libraries here used in your project */
 
 /* Use SPI communication with SDCard */

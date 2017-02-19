@@ -8,6 +8,10 @@
 #ifndef INC_PTCAN_ERRHANDLING_H_
 #define INC_PTCAN_ERRHANDLING_H_
 
+/**********************************************************************************************************************
+ *  GLOBAL FUNCTION PROTOTYPES
+ *********************************************************************************************************************/
+
 void Error_Handler_CANT(void);
 void Error_Handler_CANR(void);
 void Error_Handler_fats(void);

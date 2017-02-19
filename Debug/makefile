@@ -51,6 +51,9 @@ endif
 SECONDARY_FLASH += \
 CANSPI_v4.hex \
 
+SECONDARY_LIST += \
+CANSPI_v4.lst \
+
 SECONDARY_SIZE += \
 CANSPI_v4.siz \
 
@@ -72,18 +75,24 @@ CANSPI_v4.hex: CANSPI_v4.elf
 	@echo 'Finished building: $@'
 	@echo ' '
 
+CANSPI_v4.lst: CANSPI_v4.elf
+	@echo 'Invoking: Cross ARM GNU Create Listing'
+	arm-none-eabi-objdump --source --all-headers --demangle --line-numbers --wide "CANSPI_v4.elf" > "CANSPI_v4.lst"
+	@echo 'Finished building: $@'
+	@echo ' '
+
 CANSPI_v4.siz: CANSPI_v4.elf
 	@echo 'Invoking: Cross ARM GNU Print Size'
-	arm-none-eabi-size --format=berkeley "CANSPI_v4.elf"
+	arm-none-eabi-size --format=sysv --totals "CANSPI_v4.elf"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(CC_DEPS)$(C++_DEPS)$(OBJS)$(C_UPPER_DEPS)$(CXX_DEPS)$(SECONDARY_FLASH)$(SECONDARY_SIZE)$(ASM_DEPS)$(S_UPPER_DEPS)$(C_DEPS)$(CPP_DEPS) CANSPI_v4.elf
+	-$(RM) $(CC_DEPS)$(C++_DEPS)$(OBJS)$(C_UPPER_DEPS)$(CXX_DEPS)$(SECONDARY_FLASH)$(SECONDARY_LIST)$(SECONDARY_SIZE)$(ASM_DEPS)$(S_UPPER_DEPS)$(C_DEPS)$(CPP_DEPS) CANSPI_v4.elf
 	-@echo ' '
 
-secondary-outputs: $(SECONDARY_FLASH) $(SECONDARY_SIZE)
+secondary-outputs: $(SECONDARY_FLASH) $(SECONDARY_LIST) $(SECONDARY_SIZE)
 
 .PHONY: all clean dependents
 .SECONDARY:

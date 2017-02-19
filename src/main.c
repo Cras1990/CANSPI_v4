@@ -1,6 +1,7 @@
 /**
  ******************************************************************************
  * File Name          : main.c
+
  * Description        : Main program body
  ******************************************************************************
  *
@@ -30,54 +31,81 @@
  *
  ******************************************************************************
  */
-/* Includes ------------------------------------------------------------------*/
+
+
+
+/**********************************************************************************************************************
+ *  INCLUDES
+ *********************************************************************************************************************/
 #include "PtCan_Can.h"
 #include "PtCan_SdStorage.h"
 #include "led_button.h"
 #include "PtCan_Cfg.h"
 #include "PtCan_ErrHandling.h"
 #include "PtCan_Tim.h"
+#include "Std_Types.h"
 
+/**********************************************************************************************************************
+ *  LOCAL CONSTANT MACROS
+ **********************************************************************************************************************/
 
-static void PtCan_main_InitMcu(void);
+/**********************************************************************************************************************
+ *  LOCAL FUNCTION PROTOTYPES
+ **********************************************************************************************************************/
+static void main_InitMcu(void);
 
-static void PtCan_main_StartStorage(void);
+static void main_StartStorage(void);
 
-static void PtCan_main_StopStorage(void);
+static void main_StopStorage(void);
 
 static void SystemClock_Config(void);
 
-static volatile uint8_t program_start = 0;	// Globale Variable zur Signalisierung, dass das ganze Programm ab der Messung gestartet ist
+/**********************************************************************************************************************
+ *  LOCAL DATA PROTOTYPES
+ **********************************************************************************************************************/
+// Globale Variable zur Signalisierung, dass das ganze Programm ab der Messung gestartet ist
+// Sein Wert wird nie mehr geaendert
+static volatile uint8_t program_start = STD_OFF;
 
 
+/**********************************************************************************************************************
+ *  LOCAL FUNCTIONS
+ **********************************************************************************************************************/
 int main(void) {
 
-	PtCan_main_InitMcu();
+	main_InitMcu();
 
 	while (1) {
 
-		while (get_button_state() == 1) {      // Warte bis Knopf gedruckt wird
+		// Warte bis Knopf gedruckt wird
+		while (get_button_state() == STD_ON) {
 
-			if (PtCan_SdStorage_getStorageState() == 0) { // Wurde die Datenuebertragung richtig eingestellt und Messung noch nicht gestartet?
-
-				PtCan_main_StartStorage();
+			// Wurde die Datenuebertragung richtig eingestellt und Messung noch nicht gestartet?
+			if (PtCan_SdStorage_getStorageState() == STD_OFF) {
+				// Starte Speicherung
+				main_StartStorage();
 			}
-
+#if defined (CAN2_EIN)
 			PtCan_Can2_Transmit();
+#endif
+			// Sende Rohdaten an SD-Karte, wenn Buffer voll sind
 			PtCan_SdStorage_storeSD();
 		}
 
-		if (PtCan_SdStorage_getStorageState() != 0 && get_button_state() == 0) { // wurde Knopf erneut gedruckt und Datenspeicherung laeuft?
-
-			PtCan_main_StopStorage();
+		// wurde Knopf erneut gedruckt und Datenspeicherung laeuft?
+		if (PtCan_SdStorage_getStorageState() != STD_OFF && get_button_state() == STD_OFF) {
+			//Stope Speicherung
+			main_StopStorage();
 		}
 
 	}
 }
 
-/** System Clock Configuration
- *
- **/
+/**
+ * @brief  System Clock Configuration.
+ * @param  None
+ * @retval None
+ */
 void SystemClock_Config(void) {
 
 	RCC_OscInitTypeDef RCC_OscInitStruct;
@@ -114,7 +142,11 @@ void SystemClock_Config(void) {
 	HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
-/** Pinout Configuration
+
+/**
+ * @brief  Pinout Configuration.
+ * @param  None
+ * @retval None
  */
 void MX_GPIO_Init(void) {
 
@@ -126,7 +158,12 @@ void MX_GPIO_Init(void) {
 
 }
 
-void PtCan_main_InitMcu() {
+/**
+ * @brief  Initialization routine for all peripheral interfaces and internal HAL-Functions.
+ * @param  None
+ * @retval None
+ */
+void main_InitMcu() {
 
 	/* MCU Configuration----------------------------------------------------------*/
 
@@ -147,9 +184,11 @@ void PtCan_main_InitMcu() {
 	BSP_LED_Init(LED6);
 
 	/*##-1- Configure the CAN peripheral #######################################*/
-	MX_CAN1_Init();			// CAN Controller-Empfaenger
+	// CAN Controller-Empfaenger
+	MX_CAN1_Init();
 #if defined (CAN2_EIN)
-		MX_CAN2_Init();			// CAN Controller-Sender
+		// CAN Controller-Sender
+		MX_CAN2_Init();
 #endif
 	MX_TIM2_Init();
 	MX_TIM3_Init();
@@ -161,34 +200,56 @@ void PtCan_main_InitMcu() {
 
 }
 
-void PtCan_main_StartStorage() {
+/**
+ * @brief  Routine for initialization of CAN-Communication and SPI-Communication with SD-Card.
+ * @param  None
+ * @retval None
+ */
+void main_StartStorage() {
 
 
-	if ( PtCan_SdStorage_SDMount(STD_ON) != E_OK) {
-		Error_Handler_fats();
-	}
+//	if ( PtCan_SdStorage_SDMount(STD_ON) != E_OK) {
+//		Error_Handler_fats();
+//	}
+	PtCan_SdStorage_SDMount(STD_ON);
 
 	BSP_LED_On(LED5);
-	BSP_LED_On(LED4);	// Diese LED gibt an, ob CAN2 verwendet wird oder nicht
+#if defined (CAN2_EIN)
+	// Diese LED gibt an, dass CAN2 nicht dabei ist
+	BSP_LED_On(LED4);
+#endif
 
-	PtCan_SdStorage_setStorageState(STD_ON);			// Setze Initialisierungsbit der Speicherung
+	// Setze Initialisierungsbit der Speicherung
+	PtCan_SdStorage_setStorageState(STD_ON);
 
-	if (program_start == 0) {
+	if (program_start == STD_OFF) {
 
 		PtCan_Can1ActivReceiveIT();
-	} else {								// Sonst erwecke den CAN-Controller
-
+	} else {
+		// Sonst erwecke den CAN-Controller
 		PtCan_Can1WU();
 	}
 
 	PtCan_Tim_SetState(INST_TIM2, STD_ON);
 
-	program_start = 1; // Setze Initialisierungsbit ab der Speicherung und wird nie mehr geaendert
+	// Setze Initialisierungsbit ab Start der Speicherung.
+	// Gibt an, dass Button das erste Mal zum Abspeichern gedruckt wurde.
+	// Sein Wert wird nie mehr geaendert
+	program_start = STD_ON;
 }
 
-void PtCan_main_StopStorage() {
+/**
+ * @brief  Routine for stopping CAN-Communication and SPI-Communication with SD-Card.
+ * @param  None
+ * @retval None
+ */
+void main_StopStorage() {
 
 	/* Unmount SDCARD */
+//	if( PtCan_SdStorage_SDMount(STD_OFF) != E_OK) {
+//		Error_Handler_fats();
+//	}
+
 	PtCan_SdStorage_SDMount(STD_OFF);
 
 	PtCan_Can1Sleep();
@@ -196,19 +257,16 @@ void PtCan_main_StopStorage() {
 	PtCan_Tim_SetState(INST_TIM2, STD_OFF);
 
 	BSP_LED_Off(LED5);
-	BSP_LED_Off(LED4); // Diese LED wird ausgemacht, um anzugeben, dass CAN2 nicht dabei ist
+#if defined (CAN2_EIN)
+	// Diese LED gibt an, dass CAN2 nicht dabei ist
+	BSP_LED_Off(LED4);
+#endif
 
-	PtCan_SdStorage_setStorageState(STD_OFF); // Die CAN-Uebertragung kann wieder neu gestartet werden, nachdem dieses Bit zurueckgesetzt wurde
-//	counter = 0;
-	PtCan_Tim_SetCounter(0);
+	// Die CAN-Uebertragung kann wieder neu gestartet werden, nachdem dieses Bit zurueckgesetzt wurde
+	PtCan_SdStorage_setStorageState(STD_OFF);
+	// Reset Timer
+	PtCan_Tim_ResetCounter();
 }
 
-/**
- * @}
- */
-
-/**
- * @}
- */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

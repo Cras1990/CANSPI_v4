@@ -5,14 +5,18 @@
  *      Author: revelo
  */
 
+/**********************************************************************************************************************
+ *  INCLUDES
+ *********************************************************************************************************************/
 #include "led_button.h"
 #include "PtCan_Tim.h"
 #include "PtCan_Cfg.h"
 #include "Std_Types.h"
 
-/** @defgroup STM32F4_DISCOVERY_LOW_LEVEL_Private_Variables
- * @{
- */
+/**********************************************************************************************************************
+ *  LOCAL CONSTANT MACROS
+ **********************************************************************************************************************/
+
 GPIO_TypeDef* GPIO_PORT[LEDn] = { LED4_GPIO_PORT, LED3_GPIO_PORT,
 LED5_GPIO_PORT, LED6_GPIO_PORT };
 const uint16_t GPIO_PIN[LEDn] = { LED4_PIN, LED3_PIN, LED5_PIN, LED6_PIN };
@@ -21,13 +25,17 @@ GPIO_TypeDef* BUTTON_PORT[BUTTONn] = { KEY_BUTTON_GPIO_PORT };
 const uint16_t BUTTON_PIN[BUTTONn] = { KEY_BUTTON_PIN };
 const uint8_t BUTTON_IRQn[BUTTONn] = { KEY_BUTTON_EXTI_IRQn };
 
-static volatile uint8_t button = 0; // 1 pressed, muss spaeter in eine Methode umgewandelt werden
+/**********************************************************************************************************************
+ *  LOCAL DATA PROTOTYPES
+ **********************************************************************************************************************/
+// STD_ON signalizes button has been pressed
+// and some functionality is in active state
+static volatile uint8_t button = STD_OFF;
 
-/** @defgroup STM32F4_DISCOVERY_LOW_LEVEL_LED_Functions
- * @{
- */
 
-
+/**********************************************************************************************************************
+ *  LOCAL FUNCTIONS
+ **********************************************************************************************************************/
 
 /**
  * @brief  Configures LED GPIO.
@@ -99,14 +107,6 @@ void BSP_LED_Off(Led_TypeDef Led) {
 }
 
 /**
- * @}
- */
-
-/** @defgroup STM32F4_DISCOVERY_LOW_LEVEL_BUTTON_Functions
- * @{
- */
-
-/**
  * @brief  Configures Button GPIO and EXTI Line.
  * @param  Button: Specifies the Button to be configured.
  *   This parameter should be: BUTTON_KEY
@@ -156,33 +156,57 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
 	if (GPIO_Pin == KEY_BUTTON_PIN) {
 
-		if (get_button_state() == 0) { // Wurde Knopf zur Datenspeicherung gedrueckt?
-			set_button_state();	// Dann setze ensprechendes Signalisierungsbit
+		// Wurde Knopf zur Datenspeicherung gedrueckt?
+		if (get_button_state() == STD_OFF) {
+			// Dann setze ensprechendes Signalisierungsbit
+			set_button_state();
 		} else {
-			reset_button_state();	// Sonst, signalisiere, dass Knopf erneut gedrueckt wurde, um Messung zu stoppen
+			// Sonst, signalisiere, dass Knopf erneut gedrueckt wurde, um Messung zu stoppen
+			reset_button_state();
 
 		}
 
+		// Startet Timer, welcher 2 Sekunde lang laeuft
 		PtCan_Tim_SetState(INST_TIM3, STD_ON);
 
-		HAL_NVIC_DisableIRQ(KEY_BUTTON_EXTI_IRQn); // Deaktivierung des Interrupts fuer den Button 2 Sekunde lang
+		// Deaktivierung des Interrupts fuer den Button 2 Sekunde lang
+		HAL_NVIC_DisableIRQ(KEY_BUTTON_EXTI_IRQn);
 
 	}
 
 }
 
+/**
+ * @brief  Set new button state. Button has been pushed. The call of this
+ * 				 function should signalize that some
+ * 				 functionality has been activated
+ * @param  None
+ * @retval None
+ */
 void set_button_state(void) {
 
-	button = 1;
+	button = STD_ON;
 
 }
 
+/**
+ * @brief  Reset new button state. Button has been pushed. The call of this
+ * 				 function should signalize that some
+ * 				 functionality has been deactivated
+ * @param  None
+ * @retval None
+ */
 void reset_button_state(void) {
 
-	button = 0;
+	button = STD_OFF;
 
 }
 
+/**
+ * @brief  Get button state
+ * @param  None
+ * @retval None
+ */
 uint8_t get_button_state() {
 
 	return button;
