@@ -215,7 +215,7 @@ void PtCan_SdStorage_storeSD() { // von hier aus werden die Daten an die SD gese
  * @retval None
  */
 void PtCan_SdStorage_storeRAM(uint8_t dataIndex, volatile uint32_t time,
-		volatile uint16_t value) {
+		volatile int16_t value) {
 	uint8_t help_array = 0;
 	char buffer_tmp[50];
 
