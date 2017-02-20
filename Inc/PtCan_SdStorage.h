@@ -16,7 +16,8 @@
 
 /**********************************************************************************************************************
  *  GLOBAL FUNCTION PROTOTYPES
- *********************************************************************************************************************/void PtCan_initMemory(void);
+ *********************************************************************************************************************/
+void PtCan_initMemory(void);
 void PtCan_SdStorage_storeSD(void);
 void PtCan_SdStorage_storeRAM(uint8_t dataIndex, volatile uint32_t time, volatile int16_t value);
 void PtCan_SdStorage_SDMount(uint8_t on_off);
